@@ -65,7 +65,7 @@ while(!$ready_to_run) {
 	}
 	elsif($input =~ /^li/i) {
 		# toggle between the two strings "anshpc_pack" and "acfx_par_proc"
-		$license_type == $license_type="acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
+		$license_type eq $license_type="acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
 		#~ $license_type = $license_type ? "" : "True";
 	}
 	elsif($input =~ /^g/i) {
