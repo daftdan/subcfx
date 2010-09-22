@@ -64,7 +64,8 @@ while(!$ready_to_run) {
 		$edit_command_line = $edit_command_line ? "" : "True";
 	}
 	elsif($input =~ /^li/i) {
-		$license_type = $license_type=="acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
+		# toggle between the two strings "anshpc_pack" and "acfx_par_proc"
+		$license_type == $license_type="acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
 		#~ $license_type = $license_type ? "" : "True";
 	}
 	elsif($input =~ /^g/i) {
@@ -124,7 +125,7 @@ sub launch_job {
 
 # go to directory in which job was submitted
 #cd \$PBS_O_WORKDIR
-$prog_to_run -def \"$input_file\" $additional_options -par-dist "\$(cat \$PBS_NODEFILE)" -start-method "HP MPI Distributed Parallel"
+$prog_to_run -def \"$input_file\" -preferred-license $license_type $additional_options -par-dist "\$(cat \$PBS_NODEFILE)" -start-method "HP MPI Distributed Parallel"
 EOSCRIPT
      
     close($fh);
