@@ -1,0 +1,3 @@
+subcfx - take user input, create a PBS submission script for ANSYS CFX, submit the job
+
+a text-based interface, with sensible defaults
