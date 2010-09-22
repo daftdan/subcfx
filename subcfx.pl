@@ -16,7 +16,7 @@ my $ready_to_run	= 0;
 my $default_queue	= "cfx";
 my $license_type	= "acfx_par_proc";
 my $cfx_version;
-my %available_versions ;
+my %available_versions;
 foreach my $executable_name (</prg/ansys/v*/CFX/bin/cfx5solve>) {
 	if($executable_name =~ m!/prg/ansys/v([.\d]+)/CFX/bin/cfx5solve!) {
 		$cfx_version = $1;
@@ -65,8 +65,7 @@ while(!$ready_to_run) {
 	}
 	elsif($input =~ /^li/i) {
 		# toggle between the two strings "anshpc_pack" and "acfx_par_proc"
-		$license_type eq $license_type="acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
-		#~ $license_type = $license_type ? "" : "True";
+		$license_type = $license_type eq "acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
 	}
 	elsif($input =~ /^g/i) {
 		if($input_file and $cpus_to_use and $version) {
@@ -102,6 +101,17 @@ sub launch_job {
 			#~ $cpu_line = "#PBS -l nodes=$num_machines:ppn=2+1:ppn=1";
 		#~ }
 	#~ }
+	
+	my $license_resources;
+	if ($license_type eq "acfx_par_proc") {
+		$license_resources = "acfx_solver%acfx_par_proc+" . $cpus_to_use;
+	} elsif ($license_type eq "ans_hpc_pack") {
+		if ($cpus_to_use <= 8) {
+			$license_resources = "acfx_solver%ans_hpc_pack";
+		} else {
+			$license_resources = "acfx_solver%ans_hpc_pack+2";
+		}
+	}
 
 	my $additional_options = "";
 	$additional_options .= " -ccl $ccl_file"     if($ccl_file);
@@ -118,10 +128,7 @@ sub launch_job {
 #PBS -W umask=006
 #PBS -p 0
 #PBS -l nodes=$cpus_to_use
-#PBS -l gres=acfx_solver%acfx_par_proc+$cpus_to_use
-# CFX can also use anshpc_pack instead of (or as well as) acfx_par_proc
-# in a manner best described as "interesting", see ocsl.co.uk #6687
-##PBS -l software=acfx_solver
+#PBS -l gres=$license_resources
 
 # go to directory in which job was submitted
 #cd \$PBS_O_WORKDIR
