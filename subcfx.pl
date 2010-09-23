@@ -251,5 +251,6 @@ sub select_cpu_count {
             warn "Please select a valid number between 1 and $max_cpus \n";
         }
     }
-    return $selected_count;
+	$license_type = "anshpc_pack" if ($selected_count > 16);
+	return $selected_count;
 }
