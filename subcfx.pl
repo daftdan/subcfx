@@ -7,15 +7,16 @@ use strict;
 use Data::Dumper;
 
 ## Defaults
-my $version		= 12;
-my $cpus_to_use		= 2;
+my $version	= 120;
+my $cpus_to_use	= 2;
 my $max_cpus	= 32;
-my $ccl_file		= "";
+my $ccl_file	= "";
 my $restart_file	= "";
 my $edit_command_line	= "";
 my $ready_to_run	= 0;
 my $default_queue	= "cfx";
 my $license_type	= "acfx_par_proc";
+my $license_resources;
 my $cfx_version;
 my %available_versions;
 foreach my $executable_name (</prg/ansys/v*/CFX/bin/cfx5solve>) {
@@ -77,9 +78,9 @@ while(!$ready_to_run) {
 
 #Create the script to submit to PBS.
 sub launch_job {
-    (my $job_name = $input_file) =~ s/\.m?def$//i;
-    my $launch_filename = $job_name . ".qsub.sh";
-    open(my $fh, ">", $launch_filename)
+	(my $job_name = $input_file) =~ s/\.m?def$//i;
+	my $launch_filename = $job_name . ".qsub.sh";
+	open(my $fh, ">", $launch_filename)
         or die "Unable to open $launch_filename: $!\n";
 
 	#~ my $cpu_line;
@@ -94,7 +95,7 @@ sub launch_job {
 		#~ }
 	#~ }
 	
-	my $license_resources;
+
 	if ($license_type eq "acfx_par_proc") {
 		$license_resources = "acfx_solver%acfx_par_proc+" . $cpus_to_use;
 	} elsif ($license_type eq "ans_hpc_pack") {
@@ -126,8 +127,8 @@ sub launch_job {
 #cd \$PBS_O_WORKDIR
 $prog_to_run -def \"$input_file\" -preferred-license $license_type $additional_options -par-dist "\$(cat \$PBS_NODEFILE)" -start-method "HP MPI Distributed Parallel"
 EOSCRIPT
-     
-    close($fh);
+
+	close($fh);
 
 	# edit the script if requested, use $EDITOR if possible, scite otherwise.
 	if($edit_command_line) {
