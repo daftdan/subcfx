@@ -9,6 +9,7 @@ use Data::Dumper;
 ## Defaults
 my $version		= 12;
 my $cpus_to_use		= 2;
+my $max_cpus	= 32;
 my $ccl_file		= "";
 my $restart_file	= "";
 my $edit_command_line	= "";
@@ -25,16 +26,7 @@ foreach my $executable_name (</prg/ansys/v*/CFX/bin/cfx5solve>) {
 	}
 }
 
-#~ my %available_versions = (
-    #~ 12.1    => "/prg/ansys/v121/CFX/bin/cfx5solve",
-    #~ 12      => "/prg/ansys/v120/CFX/bin/cfx5solve",
-    #~ "11sp1" => "/prg/ansys/v110/CFX/bin/cfx5solve",
-    #~ 11      => "/prg/ansys/v110/CFX.sp0/bin/cfx5solve",
-    #~ 10      => "/prg/ansys/v100/CFX-10.0/bin/cfx5solve",
-#~ );
 
-
-my $max_cpus = 32;
 
 my $input_file = select_input_file("def");
 
@@ -251,6 +243,6 @@ sub select_cpu_count {
             warn "Please select a valid number between 1 and $max_cpus \n";
         }
     }
-	$license_type = "anshpc_pack" if ($selected_count > 16);
+	$license_type = "anshpc_pack" if ($selected_count > 12);
 	return $selected_count;
 }
