@@ -7,7 +7,7 @@ use strict;
 use Data::Dumper;
 
 ## Defaults
-my $version	= 120;
+
 my $cpus_to_use	= 2;
 my $max_cpus	= 32;
 my $ccl_file	= "";
@@ -16,24 +16,24 @@ my $edit_command_line	= "";
 my $ready_to_run	= 0;
 my $default_queue	= "cfx";
 my $license_type	= "acfx_par_proc";
-my $license_resources;
-my $cfx_version;
+my $cfx_version; #	= 120;
 my %available_versions;
 foreach my $executable_name (</prg/ansys/v*/CFX/bin/cfx5solve>) {
 	if($executable_name =~ m!/prg/ansys/v([.\d]+)/CFX/bin/cfx5solve!) {
 		$cfx_version = $1;
 		chomp $cfx_version;
 		$available_versions{$cfx_version} = $executable_name;
+		#~ print "\$available_versions{$cfx_version} is $available_versions{$cfx_version}\n";
 	}
 }
-
-
+my $prog_to_run = $available_versions{$cfx_version};
+#~ print "\$prog_to_run is $prog_to_run\n";
 
 my $input_file = select_input_file("def");
 
 while(!$ready_to_run) {
 
-    display_status();
+	display_status();
     my $input = <STDIN>;
     chomp $input;
     $input = lc $input;
@@ -42,7 +42,7 @@ while(!$ready_to_run) {
     }
 
     elsif($input =~ /^v/i) {
-        $version = select_version();
+        $cfx_version = select_version();
     }
     elsif($input =~ /^cp/i) {
         $cpus_to_use = select_cpu_count();
@@ -52,32 +52,27 @@ while(!$ready_to_run) {
     }
 	elsif($input =~ /^r/i) {
 		$restart_file = select_input_file("res");
-	}
-	elsif($input =~ /^cm/i) {
+	} elsif($input =~ /^cm/i) {
 		$edit_command_line = $edit_command_line ? "" : "True";
-	}
-	elsif($input =~ /^li/i) {
+	} elsif($input =~ /^li/i) {
 		# toggle between the two strings "anshpc_pack" and "acfx_par_proc"
 		$license_type = $license_type eq "acfx_par_proc"?"anshpc_pack":"acfx_par_proc";
-	}
-	elsif($input =~ /^g/i) {
-		if($input_file and $cpus_to_use and $version) {
+	}elsif($input =~ /^g/i) {
+		if($input_file and $cpus_to_use and $cfx_version) {
 			launch_job();
-		}
-		else {
+		} else {
 			print "You need to specify at least an input file, the number of CPUs, and the CFX version.\n";
 			print "Press [ENTER] to continue.\n";
-		my $foo = <STDIN>;
+			my $foo = <STDIN>;
 		}
-       
-	}
-	elsif($input =~ /^(exit|quit)/i) {
+       	} elsif($input =~ /^(exit|quit)/i) {
 		exit(0);
 	}
 }
 
-#Create the script to submit to PBS.
+
 sub launch_job {
+	# create a PBS submission script.
 	(my $job_name = $input_file) =~ s/\.m?def$//i;
 	my $launch_filename = $job_name . ".qsub.sh";
 	open(my $fh, ">", $launch_filename)
@@ -94,23 +89,26 @@ sub launch_job {
 			#~ $cpu_line = "#PBS -l nodes=$num_machines:ppn=2+1:ppn=1";
 		#~ }
 	#~ }
-	
+
+	my $license_resources;
 
 	if ($license_type eq "acfx_par_proc") {
-		$license_resources = "acfx_solver%acfx_par_proc+" . $cpus_to_use;
-	} elsif ($license_type eq "ans_hpc_pack") {
+		$license_resources = "acfx_solver\%acfx_par_proc+" . $cpus_to_use;
+	} elsif ($license_type eq "anshpc_pack") {
 		if ($cpus_to_use <= 8) {
-			$license_resources = "acfx_solver%ans_hpc_pack";
+			$license_resources = "acfx_solver\%anshpc_pack";
 		} else {
-			$license_resources = "acfx_solver%ans_hpc_pack+2";
+			$license_resources = "acfx_solver\%anshpc_pack+2";
 		}
 	}
+	print "license_resource is $license_resources\n";
+	my $input = <STDIN>;
 
 	my $additional_options = "";
 	$additional_options .= " -ccl $ccl_file"     if($ccl_file);
 	$additional_options .= " -ini $restart_file" if($restart_file);
 
-	my $prog_to_run = $available_versions{$version};
+	my $prog_to_run = $available_versions{$cfx_version};
 
 	print $fh <<"EOSCRIPT";
 #!/bin/sh
@@ -148,16 +146,16 @@ EOSCRIPT
 
 
 sub display_status {
-    system('clear');
-    no warnings "uninitialized";
-    print <<EOMESSAGE;
+	system('clear');
+	no warnings "uninitialized";
+	print <<EOMESSAGE;
 
 CFX Job Submission: 2010-09-21
 
 Submission Status:
 
 Job Name              (nam): $input_file
-CFX Version           (ver): $version
+CFX Version           (ver): $cfx_version
 Number of CPUs        (cpu): $cpus_to_use
 CCL File              (ccl): $ccl_file
 Restart File          (res): $restart_file
@@ -171,21 +169,21 @@ EOMESSAGE
 }
 
 sub select_input_file {
-    my $extension = shift;
-    system('clear');
-    print "\n\n\n\nPlease select the appropriate file from the list below\n";
-    my @input_files = (<*$extension>);
+	my $extension = shift;
+	system('clear');
+	print "\n\n\n\nPlease select the appropriate file from the list below\n";
+	my @input_files = (<*$extension>);
 
-    if(scalar (@input_files) == 0) {
-        print "\nNo files with an extension of $extension found. Press [ENTER] to continue.\n";
-        my $foo = <STDIN>;
-        return undef;
-    } elsif(scalar (@input_files) == 1) {
-        print "\nAutomatically selecting " . $input_files[0] . ". Press [ENTER] to continue.\n";
-        my $foo = <STDIN>;
-        return($input_files[0]);
-    }
-    #Show a list of available files
+	if(scalar (@input_files) == 0) {
+		print "\nNo files with an extension of $extension found. Press [ENTER] to continue.\n";
+		my $foo = <STDIN>;
+		return undef;
+	} elsif(scalar (@input_files) == 1) {
+		print "\nAutomatically selecting " . $input_files[0] . ". Press [ENTER] to continue.\n";
+		my $foo = <STDIN>;
+		return($input_files[0]);
+	}
+	# show a list of available files
     for(my $i=0 ; $i <= $#input_files ; $i++) {
         my $t = $i+1;
         print "$t) " . $input_files[$i] . "\n";
@@ -209,7 +207,7 @@ sub select_input_file {
 }
 
 sub select_version {
-    system('clear');
+	system('clear');
     print "\n\n\n\nPlease select the required CFX version\n";
     print "Available versions: ", join(", ", sort keys %available_versions), "\n";
     my $selected_version;
@@ -229,7 +227,7 @@ sub select_version {
 }
 
 sub select_cpu_count {
-    system('clear');
+	system('clear');
     print "\n\n\n\nPlease select the required number of CPUs (1-$max_cpus)\n";
     my $selected_count;
     until ($selected_count) {
