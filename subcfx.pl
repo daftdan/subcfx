@@ -91,7 +91,6 @@ sub launch_job {
 	#~ }
 
 	my $license_resources;
-
 	if ($license_type eq "acfx_par_proc") {
 		$license_resources = "acfx_solver\%acfx_par_proc+" . $cpus_to_use;
 	} elsif ($license_type eq "anshpc_pack") {
@@ -101,8 +100,8 @@ sub launch_job {
 			$license_resources = "acfx_solver\%anshpc_pack+2";
 		}
 	}
-	print "license_resource is $license_resources\n";
-	my $input = <STDIN>;
+	#~ print "license_resource is $license_resources\n";
+	#~ my $input = <STDIN>;
 
 	my $additional_options = "";
 	$additional_options .= " -ccl $ccl_file"     if($ccl_file);
